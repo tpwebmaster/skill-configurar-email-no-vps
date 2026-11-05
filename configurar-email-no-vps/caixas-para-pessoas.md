@@ -29,6 +29,47 @@ Rode as medições no servidor escolhido. Servidor cujo Postfix é recusado pelo
 Gmail não
 recebe caixa de pessoa antes de achar o motivo: PTR, listas de bloqueio ou porta 25.
 
+## Servidor que nunca recebeu caixa de gente: o que vem errado de fábrica
+
+Medido num CyberPanel 3.0 novo. Confira cada item antes da primeira caixa:
+
+- **Firewall fechado para e-mail.** O firewalld só tinha 21, 80 e 443. Abra 25, 465, 587 e
+  993 com `--add-port` em runtime **e** `--permanent`, e **sem `firewall-cmd --reload`**
+  quando houver Docker no servidor: o reload pode derrubar as regras dele. Teste de fora, de
+  outro servidor (`</dev/tcp/<HOSTNAME>/587`).
+- **Certificado provisório no Postfix e no Dovecot.** `smtpd_tls_cert_file` apontava para
+  `/etc/pki/dovecot/certs/dovecot.pem` (autoassinado) e o `ssl_cert` do Dovecot para
+  `<cert.pem`. Troque os dois pelo Let's Encrypt do hostname e confira as quatro portas com
+  `openssl s_client` (25 e 587 com `-starttls smtp`, 465 e 993 direto).
+- **Sem limite de caixa e sem LOGIN**: ver as seções abaixo.
+- **Ninguém bloqueia quem tenta adivinhar senha.** O fail2ban não tinha as jails de
+  e-mail: `[dovecot]` e `[postfix-sasl]` com `backend = systemd` em
+  `/etc/fail2ban/jail.d/email.local`.
+- **`createWebsite` põe `local_name` no Dovecot mesmo com `--ssl 0 --dkim 0`.** Tire o bloco
+  antes do próximo restart, ou emita o certificado na hora.
+- `lsphp83 -l` pode dar *segmentation fault* por causa de uma extensão do PHP. Para testar a
+  sintaxe, `php -n -l` (sem as extensões).
+
+## Tela no sistema para criar as caixas
+
+Quando o cliente tem um sistema seu no mesmo servidor, as caixas podem ser geridas por uma
+tela dele: criar, trocar senha, remover, escolher quem abre e abrir no webmail sem a senha.
+São quatro peças:
+
+- um script root com o domínio fixo, chamado pela API por `sudo -n`, que recebe a senha pela
+  entrada padrão (nunca em argumento) e usa as funções do próprio CyberPanel
+  (`mailUtilities.createEmailAccount`, `deleteEmailAccount`). Remover apaga também a pasta
+  das mensagens, senão uma caixa recriada com o mesmo nome herda tudo;
+- um usuário-mestre no Dovecot (`/etc/dovecot/master-users`, login `<caixa>*<mestre>`);
+- um plugin no Roundcube que, no `startup`, troca um link de uso único (60 s, hash no banco,
+  consumo por UPDATE condicional) pela caixa, numa rota da API protegida por um segredo no
+  cabeçalho, e nos ganchos `storage_connect` e `smtp_connect` entra como o mestre;
+- as tabelas de quem abre cada caixa e dos links.
+
+Quem tem a tela lê qualquer caixa: só o administrador, e cada abertura vai para o log. Se o
+domínio estiver no Google, o script recusa endereço que mora lá e não cria caixa sem a lista
+do Google (`junto-com-google.md`).
+
 ## Criar a caixa, e conferir que a senha funciona
 
 ```bash
