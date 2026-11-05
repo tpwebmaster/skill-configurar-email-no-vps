@@ -431,7 +431,8 @@ sem SPF nenhum também aparece (domínio no Google em que ninguém publicou o
   observação.
 - Não usar `a` nem `mx` no SPF.
 - Não apontar o MX para um nome que possa estar atrás de proxy.
-- Não gerar a chave DKIM por fora do painel.
+- Não mexer no SigningTable nem no nome da chave no KeyTable ao trocar a chave
+  DKIM, e não trocar o KeyTable antes de o DNS do seletor novo responder.
 - Não editar o DNS pelo CyberPanel quando a zona é de outro provedor.
 - Não apagar a caixa nem trocar a senha dela sem atualizar o `.env` junto: onde
   o segundo fator depende do e-mail, isso deixa todo mundo de fora sem saída.
