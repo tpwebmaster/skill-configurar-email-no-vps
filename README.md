@@ -17,10 +17,8 @@ falta do `ip6:`, porta 25 fechada, limite de 5 e-mails por minuto da Hostinger,
 certificado por nome (SNI) quebrado por `postmap` sem `-F`, senha certa
 recusada pelo Dovecot, Outlook que não autentica, caixa cheia e mais.
 
-Tudo saiu de servidores em produção. A parte de Google Workspace
-(`junto-com-google.md`) foi escrita a partir da documentação do Google e ainda
-não tinha rodado em produção quando foi publicada: na primeira vez, siga os
-testes do passo 4.
+Tudo saiu de servidores em produção, inclusive a parte de Google Workspace
+(`junto-com-google.md`), validada em novembro de 2026.
 
 ## Instalar
 

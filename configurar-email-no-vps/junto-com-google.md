@@ -4,10 +4,9 @@ Caso: o domínio já recebe no Google (MX `aspmx.l.google.com`), as pessoas que
 estão lá continuam lá, e o cliente quer **outros** endereços do mesmo domínio
 no servidor, com webmail, sem pagar licença do Google para cada um.
 
-⚠️ Este desenho foi escrito a partir da documentação do Google e do
-comportamento do Postfix, e ainda não tinha rodado em produção quando foi
-publicado. Na primeira vez, siga os testes do passo 4 à risca e corrija este
-arquivo com o que divergir.
+Validado em produção (novembro de 2026): os seis caminhos do passo 4 passaram, o
+endereço inexistente voltou recusado na hora e o laudo port25 deu SPF, DKIM e iprev em
+`pass`.
 
 Leia inteiro antes de criar a primeira caixa. O passo que parece inofensivo,
 `cyberpanel createEmail`, é o que quebra: a partir dele o Postfix do servidor
@@ -121,7 +120,24 @@ confira que `transport_maps` e `virtual_mailbox_maps` ainda os têm.
    - *Modify message > Change route*, escolher a rota do passo 1;
    - em *Show more options*, marcar **só** *All inactive and unrecognized
      accounts*. Deixar desmarcados *Active user account* e *Group account*.
-3. Salvar. O Google avisa que leva até 24 h; costuma ser bem menos.
+3. Salvar. O Google avisa que leva até 24 h; na prática valeu no mesmo minuto.
+
+O que a tela do Google mostrou de verdade:
+
+- **Hosts > Adicionar rota** já vem com "Exigir TLS", "certificado assinado por AC" e
+  "validar o nome do host" marcados. Use o link **Testar conexão TLS** antes de salvar: ele
+  diz "Conexão TLS validada" se o Postfix do servidor apresenta o Let's Encrypt do hostname.
+  Com o certificado autoassinado de fábrica do CyberPanel, falha.
+- No Roteamento costuma existir uma **"Default delegation rule"** que recusa mensagens. Leia
+  antes de mexer: ela só vale para "contas arquivadas com delegado atribuído" e não atrapalha.
+- Na regra nova, marcar "Todas as contas inativas e não reconhecidas" marca sozinho (e trava)
+  "Contas arquivadas com delegado atribuído". É o esperado.
+- Deixe desmarcados "Também redirecionar spam" (o spam fica no Google) e "Suprimir
+  rejeições" (endereço inexistente tem de voltar ao remetente). Marque "Exigir transporte
+  seguro (TLS)".
+- Aproveite para ver **Gmail > Autenticar e-mails**: domínio no Google sem DKIM é comum. "Gerar
+  novo registro" (2048, seletor `google`), publicar o TXT, esperar o `dig` responder e clicar
+  em "Iniciar autenticação".
 
 Os nomes dos menus mudam com o tempo (já foi *Default routing*). Referência:
 [split delivery no suporte do Google](https://knowledge.workspace.google.com/admin/gmail/advanced/send-email-to-2-email-systems-with-split-delivery).

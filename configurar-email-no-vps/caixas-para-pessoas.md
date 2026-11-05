@@ -49,6 +49,18 @@ Medido num CyberPanel 3.0 novo. Confira cada item antes da primeira caixa:
   antes do próximo restart, ou emita o certificado na hora.
 - `lsphp83 -l` pode dar *segmentation fault* por causa de uma extensão do PHP. Para testar a
   sintaxe, `php -n -l` (sem as extensões).
+- **Remover caixa quebra com `Table 'cyberpanel.e_catchall' doesn't exist`.** O `upgrade.py`
+  do painel cria `e_catchall`, `e_server_settings`, `e_plus_override` e
+  `e_pattern_forwarding` em utf8mb4, com chave estrangeira para `e_domains`, que é latin1; o
+  MariaDB recusa e o atualizador engole o erro. Crie as quatro com a definição do
+  `upgrade.py` (procure `CREATE TABLE IF NOT EXISTS \`e_catchall\``) trocando para
+  `DEFAULT CHARSET=latin1`, depois de um `mysqldump --no-data cyberpanel`.
+- **Pastas em dobro no webmail.** O CyberPanel cria `Sent`, `Drafts`, `Archive`,
+  `Deleted Items` e `Junk E-mail`; o Roundcube cria `Trash` e `Junk` por conta própria. Na
+  config do Roundcube: `create_default_folders = true`, `trash_mbox = "Deleted Items"`,
+  `junk_mbox = "Junk E-mail"`. As pastas ficam gravadas nas preferências do usuário do
+  webmail no primeiro acesso: para testar de novo, e ao remover uma caixa, apague o usuário
+  com `bin/deluser.sh --host=<HOSTNAME> <caixa>` (como o dono do vhost).
 
 ## Tela no sistema para criar as caixas
 
